@@ -1,158 +1,38 @@
-<html>
-<title>Barangay Resident Information System</title></head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barangay Resident Information System</title>
+</head>
 <body>
-<h1>Barangay Resident Information System</h1>
-<section id="login">
-<h2>Login</h2>
+    <section id="login">
+        <h2>Login</h2>
+        <input id="username" placeholder="Username">
+        <input id="password" type="password" placeholder="Password">
+        <button id="loginBtn">Sign In</button>
+        <button id="logoutBtn" hidden>Log Out</button>
+        <p id="loginMsg"></p>
+    </section>
 
-<input id="username" placeholder="Username">
-<input id="password" type="password" placeholder="Password">
-<button id="loginBtn">Sign In</button>
-<button id="logoutBtn" hidden>Log Out</button>
-<p id="loginMsg"></p>
-</section>
-<section id="app" hidden>
-<h2>Residents</h2>
-<input id="search" placeholder="Search name, ID, or purok">
-<button id="searchBtn">Search</button>
-<button id="clearBtn">Clear</button>
-<button id="newBtn">Add Resident</button>
-<button id="exportBtn">Export JSON</button>
-<input id="importFile" type="file" accept=".json,application/json">
-<button id="importBtn">Import JSON</button>
-<ul id="residentList"></ul>
-<h3 id="formTitle">Add Resident</h3>
-<form id="residentForm">
-<input id="id" type="hidden">
-<label>Full name <input id="name" required></label>
-<label>Date of birth <input id="dob" type="date" required></label>
-<label>Gender <select id="gender" required><option value="">Select</option><option>Female</option><option>Male</option><option>Other</option></select></label>
-<label>Mobile <input id="mobile"></label><label>Email <input id="email" type="email"></label>
-<label>House/street <input id="street"></label><label>Purok <input id="purok"></label>
-<label>ZIP code <input id="zip"></label>
-<label>Civil status <select id="civil"><option value="">Select</option><option>Single</option><option>Married</option><option>Widowed</option><option>Separated</option></select></label>
-<label>Household ID <input id="household"></label><label>Relationship <input id="relationship"></label>
-<label>Occupation <input id="occupation"></label><label>Emergency contact name <input id="emergencyName"></label>
-<label>Emergency contact number <input id="emergencyPhone"></label>
-<label>Status <select id="status"><option>Active</option><option>Inactive</option></select></label>
-<button type="submit" id="saveBtn">Save Resident</button><button type="button" id="cancelBtn">Cancel</button>
-</form>
-<h2>Households</h2><button id="householdsBtn">Show Households</button><ul id="householdList"></ul>
-<h2>Documents</h2><select id="docResident"></select><select id="docType"><option>Barangay Clearance</option><option>Certificate of Residency</option><option>Certificate of Indigency</option></select>
-<button id="addDocBtn">Add Document Request</button><ul id="docList"></ul>
-<h2>Settings</h2><label>Barangay name <input id="barangay" value="San Nicolas"></label><button id="settingsBtn">Save Settings</button>
-<button id="clearDataBtn">Clear All Data</button><p id="msg" role="status"></p>
-</section>
-<script>
-"use strict";
-const KEY = "brisData_v1";
-const emptyData = () => ({residents: [], documents: [], settings: {barangayName: "San Nicolas"}});
-let data = loadData(), editingId = null;
-function loadData() {
-  try {
-    const d = JSON.parse(localStorage.getItem(KEY) || "null");
-    return d && Array.isArray(d.residents) && Array.isArray(d.documents)
-      ? d : emptyData();
-  } catch { return emptyData(); }
-}
-function saveData() { localStorage.setItem(KEY, JSON.stringify(data, null, 2)); }
-function uid(prefix) { return prefix + "-" + Date.now().toString(36).toUpperCase(); }
-function msg(t) { document.getElementById("msg").textContent = t; }
-function el(id) { return document.getElementById(id); }
-function renderResidents(term = "") {
-  el("residentList").replaceChildren(); el("docResident").replaceChildren();
-  const q = term.trim().toLowerCase();
-  const rows = data.residents.filter(r => [r.id,r.name,r.purok,r.household].some(v => String(v||"").toLowerCase().includes(q)));
-  if (!rows.length) { const li=document.createElement("li"); li.textContent="No matching residents."; el("residentList").append(li); }
-  rows.forEach(r => {
-    const li=document.createElement("li"); li.append(document.createTextNode(${r.name} | ${r.id} | ${r.purok||"No purok"} | ${r.status} ));
-    const edit=document.createElement("button"); edit.textContent="Edit Profile"; edit.onclick=()=>editResident(r.id);
-    const del=document.createElement("button"); del.textContent="Delete"; del.onclick=()=>deleteResident(r.id);
-    li.append(edit,del); el("residentList").append(li);
-    const opt=document.createElement("option"); opt.value=r.id; opt.textContent=r.name+" ("+r.id+")"; el("docResident").append(opt);
-  });
-}
-function renderHouseholds() {
-  el("householdList").replaceChildren();
-  const groups={}; data.residents.forEach(r=>{if(r.household) (groups[r.household] ||= []).push(r.name);});
-  if (!Object.keys(groups).length) { const li=document.createElement("li"); li.textContent="No household IDs assigned."; el("householdList").append(li); return; }
-  Object.entries(groups).forEach(([id,names])=>{const li=document.createElement("li");li.textContent=id+": "+names.join(", ")+" ("+names.length+" members)";el("householdList").append(li);});
-}
-function renderDocs() {
-  el("docList").replaceChildren();
-  if (!data.documents.length) {const li=document.createElement("li");li.textContent="No document requests.";el("docList").append(li);return;}
-  data.documents.forEach(d=>{
-    const r=data.residents.find(x=>x.id===d.residentId);
-    const li=document.createElement("li"); li.append(document.createTextNode(${d.type} — ${r?r.name:"Resident unavailable"} — ${d.status} ));
-    const ready=document.createElement("button");ready.textContent="Mark Ready";ready.disabled=d.status==="Ready";
-    ready.onclick=()=>{d.status="Ready";saveData();renderDocs();msg("Document marked ready.");};
-    const cancel=document.createElement("button");cancel.textContent="Cancel Request";
-    cancel.onclick=()=>{if(confirm("Remove this document request?")){data.documents=data.documents.filter(x=>x.id!==d.id);saveData();renderDocs();}};
-    li.append(ready,cancel);el("docList").append(li);
-  });
-}
-function renderAll(){renderResidents(el("search").value);renderHouseholds();renderDocs();el("barangay").value=data.settings.barangayName||"";}
-function resetForm(){el("residentForm").reset();el("id").value="";editingId=null;el("formTitle").textContent="Add Resident";el("saveBtn").textContent="Save Resident";}
-function formRecord(){
- return {name:el("name").value.trim(),dob:el("dob").value,gender:el("gender").value,mobile:el("mobile").value.trim(),
- email:el("email").value.trim(),street:el("street").value.trim(),purok:el("purok").value.trim(),zip:el("zip").value.trim(),
- civil:el("civil").value,household:el("household").value.trim(),relationship:el("relationship").value.trim(),
- occupation:el("occupation").value.trim(),emergencyName:el("emergencyName").value.trim(),emergencyPhone:el("emergencyPhone").value.trim(),
- status:el("status").value,updatedAt:new Date().toISOString()};
-}
-function editResident(id){
- const r=data.residents.find(x=>x.id===id);if(!r)return;
- editingId=id;el("id").value=id;el("formTitle").textContent="Edit Resident Profile";el("saveBtn").textContent="Save Changes";
- const fields={name:"name",dob:"dob",gender:"gender",mobile:"mobile",email:"email",street:"street",purok:"purok",zip:"zip",civil:"civil",household:"household",relationship:"relationship",occupation:"occupation",emergencyName:"emergencyName",emergencyPhone:"emergencyPhone",status:"status"};
- Object.entries(fields).forEach(([key,id])=>el(id).value=r[key]||""); msg("Editing "+r.name+".");
-}
-function deleteResident(id){
- const r=data.residents.find(x=>x.id===id);if(!r||!confirm("Delete "+r.name+"'s record?"))return;
- data.residents=data.residents.filter(x=>x.id!==id);
- data.documents=data.documents.map(d=>d.residentId===id?{...d,residentDeleted:true}:d);
- saveData();renderAll();msg("Resident deleted.");
-}
-el("loginBtn").onclick=()=>{
- if(el("username").value.trim()==="admin"&&el("password").value==="admin123"){
- el("app").hidden=false;el("logoutBtn").hidden=false;el("loginMsg").textContent="Demo login successful.";renderAll();
- } else el("loginMsg").textContent="Incorrect demo username or password.";
-};
-el("logoutBtn").onclick=()=>{el("app").hidden=true;el("logoutBtn").hidden=true;el("password").value="";el("loginMsg").textContent="Logged out.";};
-el("searchBtn").onclick=()=>renderResidents(el("search").value);
-el("search").onkeydown=e=>{if(e.key==="Enter")renderResidents(el("search").value);};
-el("clearBtn").onclick=()=>{el("search").value="";renderResidents();};
-el("newBtn").onclick=()=>{resetForm();el("name").focus();msg("Fill in the resident details, then save.");};
-el("residentForm").onsubmit=e=>{
- e.preventDefault();const r=formRecord();if(!r.name||!r.dob||!r.gender){msg("Name, date of birth, and gender are required.");return;}
- if(editingId){const i=data.residents.findIndex(x=>x.id===editingId);if(i<0){msg("Resident not found.");return;}data.residents[i]={...data.residents[i],...r};msg("Profile updated.");}
- else{r.id=uid("BR");r.createdAt=new Date().toISOString();data.residents.push(r);msg("Resident saved. ID: "+r.id);}
- saveData();resetForm();renderAll();
-};
-el("cancelBtn").onclick=()=>{resetForm();msg("Form cancelled.");};
-el("householdsBtn").onclick=renderHouseholds;
-el("addDocBtn").onclick=()=>{
- const residentId=el("docResident").value;if(!residentId){msg("Add a resident first.");return;}
- data.documents.push({id:uid("DOC"),residentId,type:el("docType").value,status:"Pending",createdAt:new Date().toISOString()});
- saveData();renderDocs();msg("Document request added.");
-};
-el("settingsBtn").onclick=()=>{data.settings.barangayName=el("barangay").value.trim()||"Barangay";saveData();msg("Settings saved.");};
-el("clearDataBtn").onclick=()=>{
- if(prompt('This permanently clears all local BRIS data. Type DELETE to confirm:')!=="DELETE"){msg("Clear cancelled.");return;}
- data=emptyData();saveData();resetForm();renderAll();msg("All data cleared.");
-};
-el("exportBtn").onclick=()=>{
- const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
- const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="bris-residents-backup.json";a.click();URL.revokeObjectURL(url);msg("JSON backup exported.");
-};
-el("importBtn").onclick=async()=>{
- const file=el("importFile").files[0];if(!file){msg("Choose a JSON file first.");return;}
- try{
-  const d=JSON.parse(await file.text());
-  if(!d||!Array.isArray(d.residents)||!Array.isArray(d.documents))throw Error("JSON must contain residents and documents arrays.");
-  if(!confirm("Import will replace current data. Continue?"))return;
-  data={residents:d.residents,documents:d.documents,settings:d.settings||{barangayName:"San Nicolas"}};
-  saveData();renderAll();msg("JSON imported successfully.");
- }catch(err){msg("Import failed: "+err.message);}
-};
-</script>
-</body></html>
+    <section id="app" hidden>
+        <h2>Residents</h2>
+        <input id="search" placeholder="Search name, ID, or purok">
+        <button id="searchBtn">Search</button>
+        <button id="clearBtn">Clear</button>
+        <button id="newBtn">Add Resident</button>
+        <button id="exportBtn">Export JSON</button>
+    </section>
+
+    <script>
+        function deleteResident(id){
+            el("loginBtn").onclick=()=>{
+                if(el("username").value.trim()==="admin"&&el("password").value==="admin123"){
+                    el("app").hidden=false;el("logoutBtn").hidden=false;el("loginMsg").textContent="Demo login successful.";renderAll();                   
+                } else el("loginMsg").textContent="Incorrect username or password.";
+            };
+        }
+    </script>
+    
+</body>
+</html>
