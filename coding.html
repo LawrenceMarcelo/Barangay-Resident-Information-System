@@ -1,38 +1,219 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Barangay Resident Information System</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Barangay Resident Information System</title>
+
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f4f7fb;color:#20334b;font-size:14px} .hidden{display:none!important}
+button{border:0;background:#12365d;color:white;padding:11px 16px;border-radius:7px;cursor:pointer;font-weight:bold}button:hover{opacity:.9}
+input,select{width:100%;padding:12px;border:1px solid #e0e7f0;border-radius:7px;background:#f5f7fb;color:#20334b;outline:none}input:focus,select:focus{border-color:#e9b83d}
+label{display:block;font-size:12px;font-weight:bold;margin:14px 0 7px;color:#607187}
+.login-page{min-height:100vh;background:#12365d;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-card{width:330px;background:white;border-radius:12px;padding:25px 28px;text-align:left;box-shadow:0 12px 30px #09223e40}
+.logo{height:42px;width:42px;border-radius:50%;background:#f1bd3f;color:#12365d;border:4px solid white;outline:2px solid #f1bd3f;display:flex;align-items:center;justify-content:center;font-size:25px;font-weight:bold;margin:0 auto 16px}
+.login-card h2{text-align:center;font-size:18px;margin:0 0 8px}.login-card p{text-align:center;color:#8390a1;font-size:12px;margin-bottom:22px}
+.login-card button{width:100%;margin-top:20px}.login-card small{display:block;text-align:center;color:#8794a5;margin-top:13px;font-size:11px}
+.app{min-height:100vh;display:flex}.sidebar{width:220px;background:#12365d;color:white;padding:20px 14px;display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:12px;padding:6px 6px 28px;font-size:12px;line-height:1.4}.logo.small{height:34px;width:34px;font-size:19px;flex-shrink:0;margin:0}
+.nav{background:transparent;text-align:left;font-weight:normal;padding:12px;border-radius:7px;color:#dce7f4}.nav.active,.nav:hover{background:#214a75;color:white}.logout{margin-top:auto}
+.main{padding:28px;flex:1;min-width:0}header{display:flex;align-items:center;justify-content:space-between;margin-bottom:25px}
+h1{font-size:25px;margin:0 0 6px}header p,.muted{color:#8290a1;font-size:12px;margin:0}.user-chip{background:white;padding:10px 14px;border-radius:8px;font-size:12px}
+.search{margin:0 0 20px;max-width:100%;background:white}.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:22px}
+.stat{background:white;padding:20px;border-radius:10px;border:1px solid #edf0f5}.stat span{display:block;color:#7b8a9e;font-size:12px;margin-bottom:13px}.stat strong{font-size:26px;color:#173c65}
+.panel{background:white;border-radius:10px;padding:22px;margin-bottom:20px;border:1px solid #edf0f5}.panel h2{font-size:17px;margin:0 0 18px}
+.panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px}.panel-heading h2{margin:0}.panel-heading button{font-size:12px}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;text-align:left;white-space:nowrap}th{font-size:11px;color:#8190a3;font-weight:bold;padding:13px 10px;border-bottom:1px solid #e8edf4}td{font-size:12px;padding:14px 10px;border-bottom:1px solid #f0f2f6}td button{padding:7px 10px;font-size:11px}
+.form-panel{max-width:900px}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 18px}.form-grid .full{grid-column:1/-1}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:25px}.secondary{background:#edf2f8;color:#52647b}.danger{background:#b94b4b}
+.setting-row{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:18px 0;border-bottom:1px solid #edf0f5}.setting-row p{font-size:12px;color:#8290a1;margin:7px 0 0}.setting-row button{white-space:nowrap}
+footer{text-align:center;color:#9aa6b4;font-size:11px;padding:22px}
+@media(max-width:760px){.app{display:block}.sidebar{width:100%;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}.brand{grid-column:1/-1;padding-bottom:10px}.logout{margin-top:0}.main{padding:18px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid{grid-template-columns:1fr}.form-grid .full{grid-column:auto}header{align-items:flex-start;gap:10px}.user-chip{display:none}.setting-row{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
+
 <body>
-    <section id="login">
-        <h2>Login</h2>
-        <input id="username" placeholder="Username">
-        <input id="password" type="password" placeholder="Password">
-        <button id="loginBtn">Sign In</button>
-        <button id="logoutBtn" hidden>Log Out</button>
-        <p id="loginMsg"></p>
-    </section>
+<section id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="logo">⌂</div>
+    <h2>Barangay Resident Information System</h2>
+    <p>Sign in to continue</p>
+    <label>Username</label><input id="username" type="text" placeholder="Enter username">
+    <label>Password</label><input id="password" type="password" placeholder="Enter password">
+    <button onclick="login()">Login</button>
+    <p id="loginMessage">login: admin / admin123</p>
+  </div>
+</section>
 
-    <section id="app" hidden>
-        <h2>Residents</h2>
-        <input id="search" placeholder="Search name, ID, or purok">
-        <button id="searchBtn">Search</button>
-        <button id="clearBtn">Clear</button>
-        <button id="newBtn">Add Resident</button>
-        <button id="exportBtn">Export JSON</button>
-    </section>
-
-    <script>
-        function deleteResident(id){
-            el("loginBtn").onclick=()=>{
-                if(el("username").value.trim()==="admin"&&el("password").value==="admin123"){
-                    el("app").hidden=false;el("logoutBtn").hidden=false;el("loginMsg").textContent="Demo login successful.";renderAll();                   
-                } else el("loginMsg").textContent="Incorrect username or password.";
-            };
-        }
-    </script>
+<div id="app" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand"><div class="logo small">⌂</div><b>Barangay<br>Information System</b></div>
+    <button class="nav active" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button class="nav" onclick="showPage('residents',this)">Residents</button>
+    <button class="nav" onclick="showPage('addResident',this)">Add Resident</button>
     
+    <button class="nav" onclick="showPage('settings',this)">Settings</button>
+  </aside>
+
+  <main class="main">
+    <header><div><h1 id="pageTitle">Dashboard</h1><p>Barangay Resident Information System</p></div><div class="user-chip">Administrator</div></header>
+    <section id="dashboardPage" class="page">
+      <input id="dashboardSearch" class="search" placeholder="Search resident by name..." oninput="searchDashboard()">
+      <div class="stats">
+        <div class="stat"><span>Total Residents</span><strong id="totalCount">0</strong></div>
+        <div class="stat"><span>Male</span><strong id="maleCount">0</strong></div>
+        <div class="stat"><span>Female</span><strong id="femaleCount">0</strong></div>
+        <div class="stat"><span>Senior Citizens</span><strong id="seniorCount">0</strong></div>
+      </div>
+      <div class="panel"><div class="panel-heading"><h2>Recent Residents</h2></div>
+        <div class="table-wrap"><table><thead><tr><th>Name</th><th>Age</th><th>Gender</th><th>Address</th></tr></thead><tbody id="recentRows"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="residentsPage" class="page hidden">
+      <div class="panel"><div class="panel-heading"><h2>Residents List</h2></div>
+        <input id="residentSearch" class="search" placeholder="Search by name or address..." oninput="renderResidents()">
+        <div class="table-wrap"><table><thead><tr><th>Full Name</th><th>Age</th><th>Gender</th><th>Address</th><th>Contact</th><th>Action</th></tr></thead><tbody id="residentRows"></tbody></table></div>
+      </div>
+    </section>
+
+    <section id="addResidentPage" class="page hidden">
+      <div class="panel form-panel"><h2>Add New Resident</h2>
+        <form id="residentForm" onsubmit="addResident(event)">
+          <div class="form-grid">
+            <div><label>First Name *</label><input id="firstName" required></div>
+            <div><label>Last Name *</label><input id="lastName" required></div>
+            <div><label>Age *</label><input id="age" type="number" min="0" max="120" required></div>
+            <div><label>Gender *</label><select id="gender" required><option value="">Choose gender</option><option>Male</option><option>Female</option><option>Prefer not to say</option></select></div>
+            <div class="full"><label>Address *</label><input id="address" required placeholder="House number, street, purok"></div>
+            <div><label>Contact Number</label><input id="contact" type="tel" placeholder="09xxxxxxxxx"></div>
+            <div><label>Birth Date</label><input id="birthDate" type="date"></div>
+          </div>
+          <div class="actions"><button type="reset" class="secondary">Clear</button><button type="submit">Save Resident</button></div>
+        </form>
+      </div>
+    </section>
+
+    <section id="profilePage" class="page hidden">
+      <div class="panel form-panel"><h2>Edit Profile</h2>
+        <form onsubmit="saveProfile(event)"><div class="form-grid">
+          <div><label>Full Name</label><input id="profileName" value="System Administrator" required></div>
+          <div><label>Username</label><input id="profileUsername" value="admin" required></div>
+          <div class="full"><label>Barangay Name</label><input id="barangayName" value="Your Barangay" required></div>
+        </div><div class="actions"><button type="submit">Save Changes</button></div></form>
+      </div>
+    </section>
+    
+    <section id="settingsPage" class="page hidden">
+      <div class="panel"><h2>Settings</h2><p class="muted"></p>
+        <div class="setting-row"><div><b>Barangay Information</b></div></div>
+        <div class="setting-row"><div><b>User Management</b></div></div>
+        <div class="setting-row"><div><b>Notification</b></div></div>
+        <div class="setting-row"><div><b>Back up & Data</b></div></div>
+        <p id="settingsMessage" class="muted"></p>
+        <div class="setting-row"><div><button class="settings-logout-btn" onclick="logout()">Log Out</button></div></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script id="starterData" type="application/json">
+[
+  {"id":1,"firstName":"Juan","lastName":"Dela Cruz","age":35,"gender":"Male","address":"Purok 1","contact":"09123456789","birthDate":""},
+  {"id":2,"firstName":"Maria","lastName":"Santos","age":67,"gender":"Female","address":"Purok 2","contact":"09987654321","birthDate":""}
+]
+</script>
+
+<script>
+let starterResidents = JSON.parse(document.getElementById("starterData").textContent);
+let residents = [];
+let profile = {name:"System Administrator",username:"admin",barangay:"Your Barangay"};
+
+function loadData(){
+  const savedResidents = localStorage.getItem("barangayResidents");
+  residents = savedResidents ? JSON.parse(savedResidents) : starterResidents.slice();
+  const savedProfile = localStorage.getItem("barangayProfile");
+  if(savedProfile) profile = JSON.parse(savedProfile);
+  renderAll();
+}
+function saveResidents(){localStorage.setItem("barangayResidents",JSON.stringify(residents));}
+function login(){
+  const username=document.getElementById("username").value.trim();
+  const password=document.getElementById("password").value;
+  if(username===profile.username && password==="admin123"){
+    document.getElementById("loginPage").classList.add("hidden");
+    document.getElementById("app").classList.remove("hidden");
+    renderAll();
+  }else document.getElementById("loginMessage").textContent="Incorrect login. Try admin / admin123.";
+}
+function logout(){
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("loginPage").classList.remove("hidden");
+  document.getElementById("password").value="";
+}
+function showPage(page,button){
+  ["dashboard","residents","addResident","profile","settings"].forEach(name=>document.getElementById(name+"Page").classList.add("hidden"));
+  document.getElementById(page+"Page").classList.remove("hidden");
+  document.getElementById("pageTitle").textContent={dashboard:"Dashboard",residents:"Residents",addResident:"Add Resident",profile:"Edit Profile",settings:"Settings"}[page];
+  document.querySelectorAll(".nav").forEach(item=>item.classList.remove("active"));
+  if(button) button.classList.add("active");
+  renderAll();
+}
+function addResident(event){
+  event.preventDefault();
+  residents.push({
+    id:Date.now(),firstName:document.getElementById("firstName").value.trim(),
+    lastName:document.getElementById("lastName").value.trim(),age:Number(document.getElementById("age").value),
+    gender:document.getElementById("gender").value,address:document.getElementById("address").value.trim(),
+    contact:document.getElementById("contact").value.trim(),birthDate:document.getElementById("birthDate").value
+  });
+  saveResidents();document.getElementById("residentForm").reset();renderAll();showPage("residents");alert("Resident saved successfully!");
+}
+function deleteResident(id){
+  if(confirm("Delete this resident record?")){residents=residents.filter(r=>r.id!==id);saveResidents();renderAll();}
+}
+function fullName(r){return r.firstName+" "+r.lastName;}
+function safe(value){return String(value??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function renderResidents(){
+  const search=(document.getElementById("residentSearch")?.value||"").toLowerCase();
+  const rows=residents.filter(r=>(fullName(r)+" "+r.address).toLowerCase().includes(search));
+  document.getElementById("residentRows").innerHTML=rows.map(r=>`<tr><td>${safe(fullName(r))}</td><td>${r.age}</td><td>${safe(r.gender)}</td><td>${safe(r.address)}</td><td>${safe(r.contact||"-")}</td><td><button class="danger" onclick="deleteResident(${r.id})">Delete</button></td></tr>`).join("")||'<tr><td colspan="6">No residents found.</td></tr>';
+}
+function renderDashboard(){
+  document.getElementById("totalCount").textContent=residents.length;
+  document.getElementById("maleCount").textContent=residents.filter(r=>r.gender==="Male").length;
+  document.getElementById("femaleCount").textContent=residents.filter(r=>r.gender==="Female").length;
+  document.getElementById("seniorCount").textContent=residents.filter(r=>Number(r.age)>=60).length;
+  searchDashboard();
+}
+function searchDashboard(){
+  const search=(document.getElementById("dashboardSearch")?.value||"").toLowerCase();
+  const rows=residents.filter(r=>fullName(r).toLowerCase().includes(search)).slice(-5).reverse();
+  document.getElementById("recentRows").innerHTML=rows.map(r=>`<tr><td>${safe(fullName(r))}</td><td>${r.age}</td><td>${safe(r.gender)}</td><td>${safe(r.address)}</td></tr>`).join("")||'<tr><td colspan="4">No residents yet.</td></tr>';
+}
+function renderProfile(){
+  document.getElementById("profileName").value=profile.name;
+  document.getElementById("profileUsername").value=profile.username;
+  document.getElementById("barangayName").value=profile.barangay;
+}
+function saveProfile(event){
+  event.preventDefault();
+  profile={name:document.getElementById("profileName").value.trim(),username:document.getElementById("profileUsername").value.trim(),barangay:document.getElementById("barangayName").value.trim()};
+  localStorage.setItem("barangayProfile",JSON.stringify(profile));alert("Profile saved. Use the new username at your next login.");
+}
+function downloadJSON(){
+  const blob=new Blob([JSON.stringify(residents,null,2)],{type:"application/json"});
+  const link=document.createElement("a");link.href=URL.createObjectURL(blob);link.download="residents-backup.json";link.click();URL.revokeObjectURL(link.href);
+  document.getElementById("settingsMessage").textContent="JSON backup downloaded.";
+}
+function resetData(){
+  if(confirm("Restore the original sample residents? Your current resident list will be replaced.")){
+    residents=starterResidents.slice();saveResidents();renderAll();document.getElementById("settingsMessage").textContent="Sample data restored.";
+  }
+}
+function renderAll(){renderDashboard();renderResidents();renderProfile();}
+loadData();
+</script>
 </body>
 </html>
